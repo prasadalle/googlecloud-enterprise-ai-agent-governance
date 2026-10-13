@@ -20,45 +20,6 @@ This guide provides an end-to-end reference implementation for building a **Hub-
 
 ![End-to-End Hub-and-Spoke Agent Governance Architecture](./Agent-Governace.png)
 
-```mermaid
-flowchart TB
-    Client["Enterprise Consumer / Verifier (verify_poc.py)"]
-
-    subgraph Hub["1. Central Governance Project (HUB_PROJECT_ID)"]
-        AR["Central Agent Registry (agentregistry.googleapis.com)"]
-        RegAgent["Registered Agent Card: customer-support-agent"]
-        RegMCP["Registered MCP Spec: customer-crm-mcp (readOnlyHint)"]
-        MA["Model Armor Guardrail (gov-enterprise-guardrail)"]
-        DLP["Central PII Redaction ([EMAIL_ADDRESS], [PHONE_NUMBER])"]
-        AR --- RegAgent
-        AR --- RegMCP
-    end
-
-    subgraph Spoke1["2. Agent Runtime Project (RUNTIME_PROJECT_ID)"]
-        RE["Customer Support Agent (Vertex AI Reasoning Engine)"]
-        POL["Tool Policy Enforcement (Allow readOnlyHint=true, Block HTTP 403)"]
-        RE --- POL
-    end
-
-    subgraph Spoke2["3. MCP Server Project (MCP_PROJECT_ID)"]
-        MCP["Cloud Run MCP Server (customer-crm-mcp /mcp)"]
-        RO["Tool: get_customer_profile (readOnlyHint: true)"]
-        RW["Tool: delete_customer_record (readOnlyHint: false)"]
-        MCP --- RO
-        MCP --- RW
-    end
-
-    RE -. "Step A: Register A2A Agent Card" .-> RegAgent
-    MCP -. "Step B: Register MCP Tool Spec" .-> RegMCP
-
-    Client -- "1. Discover Agent & MCP Endpoints" --> AR
-    Client -- "2. Sanitize Prompt (Block HTTP 799)" --> MA
-    Client -- "3. Invoke Discovered Agent Endpoint (:query)" --> RE
-    RE -- "4. Discover MCP URL & Tool Annotations" --> AR
-    POL -- "5. Authorized OIDC Call (Bearer id_token)" --> MCP
-    MCP -- "6. Sanitized Tool Response" --> DLP
-```
-
 ```text
 +---------------------------------------------------------------------------------------------------+
 | 1. CENTRAL GOVERNANCE PROJECT (Hub: ${HUB_PROJECT_ID})                                            |
